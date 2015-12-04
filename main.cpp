@@ -1,6 +1,12 @@
 #include <SDL/SDL.h>
 #include <iostream>
 
+#ifdef USE_GLEE
+# include <GL/GLee.h>
+#else
+# include <GL/glew.h>
+#endif
+
 SDL_Surface * init(unsigned width, unsigned height, unsigned color)
 {
     SDL_Surface *screen;
@@ -9,11 +15,14 @@ SDL_Surface * init(unsigned width, unsigned height, unsigned color)
         std::cout << "SDL ERROR: Video initialization: " << SDL_GetError() << std::endl;
     else
     {
-        screen = SDL_SetVideoMode(width, height, color, SDL_SWSURFACE);
+        SDL_WM_SetCaption("SketchDown", NULL);
+        screen = SDL_SetVideoMode(width, height, color, SDL_OPENGL);
         if(screen == NULL)
             std::cout << "SDL ERROR: Window creation: " << SDL_GetError() << std::endl;
         else
         {
+            SDL_FillRect(screen, NULL, 0x808080);
+            SDL_Flip(screen);
             return screen;
         }
     }
@@ -47,13 +56,13 @@ void mainLoop()
                     std::cout << "KEY UP" << std::endl;
                     break;
                 case SDL_MOUSEMOTION :
-                    std::cout << "MOUSE MOTION " << event.motion.x << " + " << event.motion.y << " + " << event.motion.xrel << " + " << event.motion.yrel << " + " << event.motion.state << std::endl;
+                    //std::cout << "MOUSE MOTION " << event.motion.x << " + " << event.motion.y << " + " << event.motion.xrel << " + " << event.motion.yrel << " + " << event.motion.state << std::endl;
                     break;
                 case SDL_MOUSEBUTTONDOWN :
-                    std::cout << "MOUSE BUTTON DOWN " << event.button.button << " + " << event.button.x << " + " << event.button.y << std::endl;
+                    //onMouseDown(event.button.button, event.button.x, event.button.y);
                     break;
                 case SDL_MOUSEBUTTONUP :
-                    std::cout << "MB UP" << std::endl;
+                    std::cout << "DRAW COMPLETE" << std::endl;
                     break;
                 case SDL_QUIT :
                     return; // End main loop
@@ -74,10 +83,31 @@ void mainLoop()
 }    
 
 int main(int argc, char *argv[])
-{
+{  
     init(640, 480, 32);
     
-    mainLoop();
+    SDL_GL_SetAttribute ( SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute ( SDL_GL_DEPTH_SIZE, 16 );
+    
+    //mainLoop();
+    while(1)
+    {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable( GL_TEXTURE_2D );
+        glClearColor( 1.0f, 0.0f, 0.0f, 1.0f );
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
+
+
+        glColor3f(1.0, 1.0, 0.0);
+        glBegin(GL_LINES);
+        glVertex3f(0.0, 0.0, 0.0);
+        glVertex3f(0.75, 0.75, 0.0);
+        glEnd();
+    
+        SDL_GL_SwapBuffers(); 
+    }
     
     atexit(SDL_Quit);
     
